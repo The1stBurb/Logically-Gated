@@ -1,0 +1,1 @@
+{"C#Ymmc'i(X": And(387,300,ins=[['A', 0], ['B', 0]],outs=[['O', 0]],name=AND,ID=)}
