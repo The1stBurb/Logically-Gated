@@ -1,1 +1,1 @@
-{'gate#d\\2[[OfDD': Not(245,236,ins=[['A', 0]],outs=[['O', 0]],name='NOT',ID=''), 'gatebIr3C58yvm': Not(432,241,ins=[['A', 0]],outs=[['O', 0]],name='NOT',ID=''), '': LogicWires(['', 'O'],None,None,ID='',pos=[[298, 246], [394, 140], [161, 106], [244, 246]])}
+{'gate)m9UHQ}_f8': Not(220,250,ins=[['A', 0]],outs=[['O', 0]],name='NOT',ID=r'gate)m9UHQ}_f8')}
