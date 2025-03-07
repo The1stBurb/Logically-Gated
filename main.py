@@ -44,9 +44,12 @@ class LogicWires:
         else:self.end=spot
     def update(self):
         global updateNext,gates_wires
+        pend=self.value
         if self.strt[2]=="in":self.value=gates_wires[self.strt[0]].ins[self.strt[1]]
         else:self.value=gates_wires[self.strt[0]].outs[self.strt[1]]
-        updateNext=updateNext+[self.end[0]]
+        if self.end[2]=="in":gates_wires[self.end[0]].ins[self.end[1]]=self.value
+        else:self.value=gates_wires[self.end[0]].outs[self.end[1]]=self.value
+        if self.value!=pend:updateNext=updateNext+[self.end[0]]
     def isPress(self,mx,my,pmx,pmy):pass
     def __repr__(self):
         return f"LogicWires({self.strt},{None},{None},ID=r'{self.ID}',endID={self.end},pos={self.pos})"
@@ -78,18 +81,18 @@ class logicGate:
     def logic(self):
         pass
     def inOrOut(self,mx,my):
-        for i in range(len(self.ins)):
-            cx,cy=self.x,self.y+i*20+10
+        for x,i in enumerate(self.ins):
+            cx,cy=self.x,self.y+x*20+10
             if dist(cx,cy,mx,my)<10:return[self.ID,i,"in"]
-        for i in range(len(self.outs)):
-            cx,cy=self.x+self.width,self.y+i*20+10
+        for x,i in enumerate(self.outs):
+            cx,cy=self.x+self.width,self.y+x*20+10
             if dist(cx,cy,mx,my)<10:return[self.ID,i,"out"]
         return False
     def isPress(self,mx,my,pmx,pmy):
         if mx>self.x and my>self.y and mx<self.x+self.width and my<self.y+self.height:
-            if pmx!=mx or my!=pmy:
-                self.x+=(mx-pmx)
-                self.y+=(my-pmy)
+            # if pmx!=mx or my!=pmy:
+            #     self.x+=(mx-pmx)
+            #     self.y+=(my-pmy)
             self.onPress(mx,my)
     def onPress(self,mx,my):
         pass
@@ -104,7 +107,7 @@ class Not(logicGate):
     def __init__(self,x,y,ins={},outs={},name="",ID="",ties=[]):
         super().__init__(x,y,ins={"A":0},outs={"O":0},name="NOT",ID=ID,ties=ties)
     def logic(self):
-        self.ins["A"]=int(not self.ins["A"])
+        self.outs["O"]=int(not self.ins["A"])
 class Or(logicGate):
     def __init__(self,x,y,ins={},outs={},name="",ID="",ties=[]):
         super().__init__(x,y,ins={"A":0,"B":0},outs={"O":0},name="Or",ID=ID,ties=ties)
@@ -135,6 +138,7 @@ class Lever(logicGate):
         super().__init__(x,y,ins=[],outs={"O":0},name="Lever",ID=ID,ties=ties)
     def onPress(self,mx,my):
         self.outs["O"]=int(not self.outs["O"])
+        self.update()
 gates=[And,Not,Or,Nand,Nor,Xor,Xnor,Lever]
 def clear():
     with open("save.txt","w")as save:save.write("{}")
@@ -151,7 +155,7 @@ wire=None
 pMF=False
 while True:
     update=updateNext
-    # updateNext=[]
+    updateNext=[]
     screen.fill((200,200,200))
     # pms=ms.copy()
     pms=[pms[0]if pMF else ms[0],pms[1]if pMF else ms[1],ms[2]]
@@ -201,7 +205,7 @@ while True:
             gates[select](ms[0],ms[1]).disp(0,0)
     if pygame.mouse.get_pressed()[0]:
         pMF=True
-    pb.text(f"{updateNext}",0,20)
+    pb.text(f"{updateNext}, {update}",0,20)
     keys=pygame.key.get_pressed()
     if keys[k1]:select=1
     elif keys[k2]:select=2
@@ -217,6 +221,6 @@ while True:
         gates_wires[i].disp(ms[0],ms[1])
         if ms[2]==False and pms[2]:
             gates_wires[i].isPress(ms[0],ms[1],pms[0],pms[1])
-    for i in update:
+    for i in update[:10]:
         gates_wires[i].update()
     pygame.display.flip()
