@@ -1,5 +1,6 @@
 import pygame 
 import random
+# print("12345"[:5])
 #re color an image
 #DO NOT CHANGE BACK THIS IS BETTER!!!!!!!!!!!!!!!!!!!!!!
 #IT ENABLES LOTS OF STUFFS
@@ -82,7 +83,7 @@ class pb:
         self.screen.blit(srfce,(x+self.moveBy[0], y+self.moveBy[1]))
     #write text
     def text(self,txt,x,y,col=(0,0,0)):
-        self.screen.blit(self.font.render(txt, True, col),(x+self.moveBy[0],y+self.moveBy[1]))
+        self.screen.blit(self.font.render(str(txt), True, col),(x+self.moveBy[0],y+self.moveBy[1]))
     #make a quadrilateral
     def quad(self,x1,y1,x2,y2,x3,y3,x4,y4,col=(255,255,255)):
         pygame.draw.polygon(self.screen, col, [(x1+self.moveBy[0],y1+self.moveBy[1]),(x2+self.moveBy[0],y2+self.moveBy[1]),(x3+self.moveBy[0],y3+self.moveBy[1]),(x4+self.moveBy[0],y4+self.moveBy[1]),])

@@ -1,1 +1,1 @@
-{"C#Ymmc'i(X": And(387,300,ins=[['A', 0], ['B', 0]],outs=[['O', 0]],name=AND,ID=)}
+{'gate#d\\2[[OfDD': Not(245,236,ins=[['A', 0]],outs=[['O', 0]],name='NOT',ID=''), 'gatebIr3C58yvm': Not(432,241,ins=[['A', 0]],outs=[['O', 0]],name='NOT',ID=''), '': LogicWires(['', 'O'],None,None,ID='',pos=[[298, 246], [394, 140], [161, 106], [244, 246]])}

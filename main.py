@@ -18,20 +18,23 @@ def gen():
     return "".join([choice(ltrs)for i in range(10)])
 ms=pms=[0,0]
 class LogicWires:
-    def __init__(self,startID,x,y):
+    def __init__(self,startID,x,y,ID="",pos=None):
         self.strt=startID
         self.end=""
-        self.pos=[[x,y]]
+        self.pos=pos if pos else [[x,y]]
         self.value=0
+        self.ID=""
     def disp(self,mx=-231,my=-231):
         for i in range(0,len(self.pos)-1):
             p1=self.pos[i]
             p2=self.pos[i+1]
             pb.line(p1[0],p1[1],p2[0],p2[1],width=5)
-        if mx!=my and mx!=-231:pb.line(self.pos[-1][0],self.pos[-1][1],mx,my,width=5)
+        if self.end=="":pb.line(self.pos[-1][0],self.pos[-1][1],mx,my,width=5)
     def build(self,mx,my,spot=""):
         if spot=="":self.pos.append([mx,my])
         else:self.end=spot
+    def __repr__(self):
+        return f"LogicWires({self.strt},{None},{None},ID='{self.ID}',pos={self.pos})"
 class logicGate:
     def __init__(self,x,y,ins=[],outs=[],name="NothingToSeeHere",ID=''):
         self.x,self.y=x,y
@@ -65,7 +68,7 @@ class logicGate:
             if dist(cx,cy,mx,my)<10:return[self.ID,self.outs[i][0]]
         return False
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.x},{self.y},ins={self.ins},outs={self.outs},name={self.name},ID={self.ID})"
+        return f"{self.__class__.__name__}({self.x},{self.y},ins={self.ins},outs={self.outs},name=\'{self.name}',ID='{self.ID}')"
 class And(logicGate):
     def __init__(self,x,y,ins=[],outs=[],name="",ID=""):
         super().__init__(x,y,ins=[["A",0],["B",0]],outs=[["O",0]],name="AND")
@@ -102,12 +105,15 @@ class Xnor(logicGate):
     def logic(self):
         self.outs[0][1]=int(not ((self.ins[0][1] or self.ins[1][1])and not(self.ins[0][1] and self.ins[1][1])))
 gates=[And,Not,Or,Nand,Nor,Xor,Xnor]
+def clear():
+    with open("save.txt","w")as save:save.write("{}")
+clear()
 bob=[]
 with open("save.txt","r")as save:
     bob=save.read()
-gates_wires={}#eval(bob)[0]
+gates_wires=eval(bob)
 updateNext=update=[]
-select=0
+select=-1
 k1,k2,k3,k4,k5,k6,k7,k8,k9,k0=pygame.K_1,pygame.K_2,pygame.K_3,pygame.K_4,pygame.K_5,pygame.K_6,pygame.K_7,pygame.K_8,pygame.K_9,pygame.K_0
 # print("its on")
 wire=None
@@ -128,19 +134,34 @@ while True:
             if select==9:
                 if wire==None:
                     for i in gates_wires:
-                        frog=gates_wires[i].inOrOut(ms[0],ms[1])
-                        if frog:
-                            wire=LogicWires(frog,ms[0],ms[1])
-                            break
+                        if i[:4]=="gate":
+                            frog=gates_wires[i].inOrOut(ms[0],ms[1])
+                            if frog:
+                                wire=LogicWires(frog,ms[0],ms[1],ID="wire"+gen())
+                                break
                 else:
-                    pass
+                    for i in gates_wires:
+                        if i[:4]=="gate":
+                            frog=gates_wires[i].inOrOut(ms[0],ms[1])
+                            if frog and frog!=wire.strt:
+                                wire.end=frog
+                                gates_wires[wire.ID]=wire
+                                wire.build(ms[0],ms[1])
+                                wire=None
+                                select=-1
+                                break
+                    else:wire.build(ms[0],ms[1])
             elif select!=-1:
-                bob=gen()
+                bob="gate"+gen()
                 gates_wires[bob]=gates[select](ms[0],ms[1],ID=bob)
                 select=-1
     if select!=-1:
-        if select==9 and wire!=None:wire.disp(ms[0],ms[1])
-        elif select<len(gates):gates[select](ms[0],ms[1]).disp(0,0)
+        if select==9:
+            if wire!=None:wire.disp(ms[0],ms[1])
+            pb.text("Wire",0,0)
+        elif select<len(gates):
+            gates[select](ms[0],ms[1]).disp(0,0)
+    pb.text(wire,0,20)
     keys=pygame.key.get_pressed()
     if keys[k1]:select=1
     elif keys[k2]:select=2
