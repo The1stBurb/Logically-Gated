@@ -6,6 +6,14 @@ pygame.init()
 pygame.mixer.init()
 X = 1100
 Y = 700
+
+
+
+#NEED TO FIX INS/OUTS SO THEY ARE DICTS
+
+
+
+
 screen = pygame.display.set_mode((X, Y),pygame.RESIZABLE)#,pygame.FULLSCREEN)
 clk=pygame.time.Clock()
 pygame.font.init()
@@ -28,16 +36,21 @@ class LogicWires:
         for i in range(0,len(self.pos)-1):
             p1=self.pos[i]
             p2=self.pos[i+1]
-            pb.line(p1[0],p1[1],p2[0],p2[1],width=5)
+            pb.line(p1[0],p1[1],p2[0],p2[1],width=5,col=((255,0,0)if self.value else (0,0,0)))
         if self.end==[]:pb.line(self.pos[-1][0],self.pos[-1][1],mx,my,width=5)
     def build(self,mx,my,spot=""):
         if spot=="":self.pos.append([mx,my])
         else:self.end=spot
+    def update(self):
+        global update,gates_wires
+        if self.strt[2]=="in":self.value=gates_wires[self.strt[0]].ins[self.strt[1]]
+        else:self.value=gates_wires[self.strt[0]].outs[self.strt[1]]
+        update=update+[self.strt[0],self.end[0]]
     def isPress(self,mx,my,pmx,pmy):pass
     def __repr__(self):
         return f"LogicWires({self.strt},{None},{None},ID=r'{self.ID}',endId={self.end},pos={self.pos})"
 class logicGate:
-    def __init__(self,x,y,ins=[],outs=[],name="NothingToSeeHere",ID=''):
+    def __init__(self,x,y,ins=[],outs=[],name="NothingToSeeHere",ID='',ties=[]):
         self.x,self.y=x,y
         self.ins=ins
         self.outs=outs
@@ -45,6 +58,7 @@ class logicGate:
         self.name=name
         self.height=max(len(self.ins),len(self.outs))*20
         self.ID=ID
+        self.ties=ties
     def disp(self,mx,my):
         pb.rect(self.x,self.y,self.width,self.height,col=(100,100,100))
         for i in range(len(self.ins)):
@@ -56,17 +70,19 @@ class logicGate:
             pb.circle(cx,cy,6,col=((255,0,0)if self.outs[i][1]else (0,0,0)))
             if dist(cx,cy,mx,my)<10:pb.text(self.outs[i][0],mx,my-10)#,col=(120,120,120))
         pb.text(self.name,self.x+10,self.y+self.height/2-10)
-    def do(self):
-        pass
+    def update(self):
+        global update
+        self.logic()
+        update=update+self.ties
     def logic(self):
         pass
     def inOrOut(self,mx,my):
         for i in range(len(self.ins)):
             cx,cy=self.x,self.y+i*20+10
-            if dist(cx,cy,mx,my)<10:return[self.ID,self.ins[i][0]]
+            if dist(cx,cy,mx,my)<10:return[self.ID,self.ins[i][0],"in"]
         for i in range(len(self.outs)):
             cx,cy=self.x+self.width,self.y+i*20+10
-            if dist(cx,cy,mx,my)<10:return[self.ID,self.outs[i][0]]
+            if dist(cx,cy,mx,my)<10:return[self.ID,self.outs[i][0],"out"]
         return False
     def isPress(self,mx,my,pmx,pmy):
         if mx>self.x and my>self.y and mx<self.x+self.width and my<self.y+self.height:
@@ -77,45 +93,45 @@ class logicGate:
     def onPress(self,mx,my):
         pass
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.x},{self.y},ins={self.ins},outs={self.outs},name='{self.name}',ID=r'{self.ID}')"
+        return f"{self.__class__.__name__}({self.x},{self.y},ins={self.ins},outs={self.outs},name='{self.name}',ID=r'{self.ID}',ties={self.ties})"
 class And(logicGate):
-    def __init__(self,x,y,ins=[],outs=[],name="",ID=""):
-        super().__init__(x,y,ins=[["A",0],["B",0]],outs=[["O",0]],name="AND",ID=ID)
+    def __init__(self,x,y,ins=[],outs=[],name="",ID="",ties=[]):
+        super().__init__(x,y,ins=[["A",0,""],["B",0,""]],outs=[["O",0,]],name="AND",ID=ID,ties=ties)
     def logic(self):
         self.outs[0][1]=int(self.ins[0][1] and self.ins[1][1])
 class Not(logicGate):
-    def __init__(self,x,y,ins=[],outs=[],name="",ID=""):
-        super().__init__(x,y,ins=[["A",0]],outs=[["O",0]],name="NOT",ID=ID)
+    def __init__(self,x,y,ins=[],outs=[],name="",ID="",ties=[]):
+        super().__init__(x,y,ins=[["A",0]],outs=[["O",0]],name="NOT",ID=ID,ties=ties)
     def logic(self):
         self.ins[0][1]=int(not self.ins[0][1])
 class Or(logicGate):
-    def __init__(self,x,y,ins=[],outs=[],name="",ID=""):
-        super().__init__(x,y,ins=[["A",0],["B",0]],outs=[["O",0]],name="Or",ID=ID)
+    def __init__(self,x,y,ins=[],outs=[],name="",ID="",ties=[]):
+        super().__init__(x,y,ins=[["A",0],["B",0]],outs=[["O",0]],name="Or",ID=ID,ties=ties)
     def logic(self):
         self.outs[0][1]=int(self.ins[0][1] or self.ins[1][1])
 class Nand(logicGate):
-    def __init__(self,x,y,ins=[],outs=[],name="",ID=""):
-        super().__init__(x,y,ins=[["A",0],["B",0]],outs=[["O",0]],name="NAND",ID=ID)
+    def __init__(self,x,y,ins=[],outs=[],name="",ID="",ties=[]):
+        super().__init__(x,y,ins=[["A",0],["B",0]],outs=[["O",0]],name="NAND",ID=ID,ties=ties)
     def logic(self):
         self.outs[0][1]=int(not (self.ins[0][1] and self.ins[1][1]))
 class Nor(logicGate):
-    def __init__(self,x,y,ins=[],outs=[],name="",ID=""):
-        super().__init__(x,y,ins=[["A",0],["B",0]],outs=[["O",0]],name="NOR",ID=ID)
+    def __init__(self,x,y,ins=[],outs=[],name="",ID="",ties=[]):
+        super().__init__(x,y,ins=[["A",0],["B",0]],outs=[["O",0]],name="NOR",ID=ID,ties=ties)
     def logic(self):
         self.outs[0][1]=int(not (self.ins[0][1] or self.ins[1][1]))
 class Xor(logicGate):
-    def __init__(self,x,y,ins=[],outs=[],name="",ID=""):
-        super().__init__(x,y,ins=[["A",0],["B",0]],outs=[["O",0]],name="XOR",ID=ID)
+    def __init__(self,x,y,ins=[],outs=[],name="",ID="",ties=[]):
+        super().__init__(x,y,ins=[["A",0],["B",0]],outs=[["O",0]],name="XOR",ID=ID,ties=ties)
     def logic(self):
         self.outs[0][1]=int((self.ins[0][1] or self.ins[1][1])and not(self.ins[0][1] and self.ins[1][1]))
 class Xnor(logicGate):
-    def __init__(self,x,y,ins=[],outs=[],name="",ID=""):
-        super().__init__(x,y,ins=[["A",0],["B",0]],outs=[["O",0]],name="XNOR",ID=ID)
+    def __init__(self,x,y,ins=[],outs=[],name="",ID="",ties=[]):
+        super().__init__(x,y,ins=[["A",0],["B",0]],outs=[["O",0]],name="XNOR",ID=ID,ties=ties)
     def logic(self):
         self.outs[0][1]=int(not ((self.ins[0][1] or self.ins[1][1])and not(self.ins[0][1] and self.ins[1][1])))
 class Lever(logicGate):
-    def __init__(self,x,y,ins=[],outs=[],name="",ID=""):
-        super().__init__(x,y,ins=[],outs=[["O",0]],name="Lever",ID=ID)
+    def __init__(self,x,y,ins=[],outs=[],name="",ID="",ties=[]):
+        super().__init__(x,y,ins=[],outs=[["O",0]],name="Lever",ID=ID,ties=ties)
     def onPress(self,mx,my):
         self.outs[0][1]=int(not self.outs[0][1])
 gates=[And,Not,Or,Nand,Nor,Xor,Xnor,Lever]
@@ -131,11 +147,14 @@ select=-1
 k1,k2,k3,k4,k5,k6,k7,k8,k9,k0=pygame.K_1,pygame.K_2,pygame.K_3,pygame.K_4,pygame.K_5,pygame.K_6,pygame.K_7,pygame.K_8,pygame.K_9,pygame.K_0
 # print("its on")
 wire=None
+pMF=False
 while True:
     update=updateNext
     updateNext=[]
     screen.fill((200,200,200))
-    pms=ms.copy()
+    # pms=ms.copy()
+    pms=[pms[0]if pMF else ms[0],pms[1]if pMF else ms[1],ms[2]]
+    pMF=False
     ms=[pygame.mouse.get_pos()[0],pygame.mouse.get_pos()[1],False]
     for i in pygame.event.get():
         if i.type == pygame.QUIT:
@@ -153,6 +172,7 @@ while True:
                             frog=gates_wires[i].inOrOut(ms[0],ms[1])
                             if frog:
                                 wire=LogicWires(frog,ms[0],ms[1],ID="wire"+gen())
+                                # gates_wires[i].
                                 break
                 else:
                     for i in gates_wires:
@@ -162,6 +182,8 @@ while True:
                                 wire.end=frog
                                 gates_wires[wire.ID]=wire
                                 wire.build(ms[0],ms[1])
+                                gates_wires[wire.strt[0]].ties.append(wire.ID)
+                                gates_wires[wire.end[0]].ties.append(wire.ID)
                                 wire=None
                                 select=-1
                                 break
@@ -176,7 +198,9 @@ while True:
             pb.text("Wire",0,0)
         elif select<len(gates):
             gates[select](ms[0],ms[1]).disp(0,0)
-    pb.text(f"{ms[0]},{ms[1]}\n{pms[0]},{pms[1]}",0,20)
+    if pygame.mouse.get_pressed()[0]:
+        pMF=True
+    pb.text(f"{ms[0]},{ms[1]}   {pms[0]},{pms[1]}   {ms[0]!=pms[0]},{ms[1]!=pms[1]}   {pMF}",0,20)
     keys=pygame.key.get_pressed()
     if keys[k1]:select=1
     elif keys[k2]:select=2
